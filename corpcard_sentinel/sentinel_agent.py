@@ -18,7 +18,8 @@ if not GOOGLE_API_KEY:
     # Fallback or warning - in a real app this should probably error out
     print("WARNING: GOOGLE_API_KEY not found in environment variables.")
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=GOOGLE_API_KEY)
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-2.5-flash")
+llm = ChatGoogleGenerativeAI(model=LLM_MODEL, google_api_key=GOOGLE_API_KEY)
 
 class AgentState(TypedDict):
     transaction: Dict[str, Any]

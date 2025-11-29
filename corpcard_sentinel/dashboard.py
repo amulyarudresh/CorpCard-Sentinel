@@ -2,8 +2,10 @@ import streamlit as st
 import requests
 import pandas as pd
 
+import os
+
 # API Configuration
-API_BASE_URL = "http://localhost:8000"
+API_BASE_URL = os.getenv("API_URL", "https://corpcard-sentinel-api.onrender.com")
 
 st.set_page_config(page_title="CorpCard Sentinel Admin", layout="wide")
 st.title("🛡️ CorpCard Sentinel Admin Dashboard")
