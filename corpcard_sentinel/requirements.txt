@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+pymysql
+pydantic
+langgraph
+langchain
+langchain-core
+python-dotenv
+cryptography
+streamlit
+requests
+langchain-google-genai
+pandas
