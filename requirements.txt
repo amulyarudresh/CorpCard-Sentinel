@@ -12,3 +12,4 @@ streamlit
 requests
 langchain-google-genai
 pandas
+mysqlclient
