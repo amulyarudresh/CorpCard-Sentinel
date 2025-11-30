@@ -15,6 +15,8 @@ The system uses **LangGraph** to orchestrate a sophisticated decision-making pro
 4.  **Re-Evaluate**: The LLM re-assesses the transaction with this new context.
 5.  **Enforce**: Freezes the card if a violation is confirmed.
 
+![agent_flow](agent_flow.png)
+
 ## Features
 
 - **Real-time Transaction Simulation**: Simulate transactions and see the agent's thought process.
@@ -28,7 +30,7 @@ The system uses **LangGraph** to orchestrate a sophisticated decision-making pro
 
 - **Backend**: FastAPI, SQLAlchemy, PyMySQL
 - **Frontend**: Streamlit
-- **AI**: LangChain, LangGraph, Google Gemini API (`gemini-1.5-flash`)
+- **AI**: LangChain, LangGraph, Google Gemini API (`gemini-2.5-flash`)
 - **Database**: MySQL (Production) / SQLite (Dev)
 
 ## Setup Instructions
@@ -49,7 +51,7 @@ The system uses **LangGraph** to orchestrate a sophisticated decision-making pro
     ```env
     GOOGLE_API_KEY=your_api_key_here
     DATABASE_URL=mysql+pymysql://user:pass@host/db_name  # Optional, defaults to local
-    LLM_MODEL=gemini-1.5-flash-001
+    LLM_MODEL=gemini-2.5-flash
     ```
 
 4.  **Seed the Database**
