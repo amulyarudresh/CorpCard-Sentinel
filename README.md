@@ -1,22 +1,35 @@
 # CorpCard Sentinel 🛡️
 
-CorpCard Sentinel is an AI-powered Corporate Card Fraud Detection System. It uses a real-time policy engine backed by Google's Gemini LLM to analyze transactions and prevent fraud before it happens.
+CorpCard Sentinel is an AI-powered Corporate Card Fraud Detection System. It uses a **ReAct (Reason + Act)** agentic workflow backed by Google's Gemini LLM to analyze transactions, investigate user history, and prevent fraud before it happens.
+
+## 🧠 Agentic Architecture (ReAct Loop)
+
+The system uses **LangGraph** to orchestrate a sophisticated decision-making process:
+
+1.  **Monitor**: Intercepts the transaction.
+2.  **Evaluate**: The LLM analyzes the transaction against active policies and decides:
+    *   **SAFE**: Approve immediately.
+    *   **VIOLATION**: Block immediately.
+    *   **SUSPICIOUS**: Trigger an investigation.
+3.  **Investigate**: If suspicious, the agent **queries the database** to fetch the user's spending history (average spend, top categories, recent activity).
+4.  **Re-Evaluate**: The LLM re-assesses the transaction with this new context.
+5.  **Enforce**: Freezes the card if a violation is confirmed.
 
 ## Features
 
-- **Real-time Transaction Simulation**: Simulate transactions and see immediate feedback.
-- **AI-Powered Analysis**: Uses Gemini 1.5 Flash to analyze transactions against complex natural language policies.
-- **Policy Management**: Create, Update, and Delete policies dynamically.
-- **Card Management**: Freeze/Unfreeze user cards.
-- **Audit Logs**: View a detailed history of all transactions with AI analysis.
+- **Real-time Transaction Simulation**: Simulate transactions and see the agent's thought process.
+- **Context-Aware Analysis**: The agent knows if a user "usually buys coffee" or "never spends on Tech".
+- **Dynamic Policy Engine**: Create, Update, and Delete policies in natural language (e.g., "No alcohol on weekdays").
+- **Card Management**: Automatically freezes cards upon fraud detection.
+- **Audit Logs**: View detailed logs including the LLM's reasoning and investigation steps.
 - **Fail-Closed Security**: Automatically blocks transactions if the security check fails.
 
 ## Tech Stack
 
 - **Backend**: FastAPI, SQLAlchemy, PyMySQL
 - **Frontend**: Streamlit
-- **AI**: LangChain, LangGraph, Google Gemini API
-- **Database**: MySQL (or SQLite for demo)
+- **AI**: LangChain, LangGraph, Google Gemini API (`gemini-1.5-flash`)
+- **Database**: MySQL (Production) / SQLite (Dev)
 
 ## Setup Instructions
 
@@ -28,30 +41,41 @@ CorpCard Sentinel is an AI-powered Corporate Card Fraud Detection System. It use
 
 2.  **Install Dependencies**
     ```bash
-    pip install -r corpcard_sentinel/requirements.txt
+    pip install -r requirements.txt
     ```
 
 3.  **Environment Setup**
-    Create a `.env` file in the root directory and add your Google API Key:
-    ```
+    Create a `.env` file in the root directory:
+    ```env
     GOOGLE_API_KEY=your_api_key_here
+    DATABASE_URL=mysql+pymysql://user:pass@host/db_name  # Optional, defaults to local
+    LLM_MODEL=gemini-1.5-flash-001
     ```
 
-4.  **Run the Backend**
+4.  **Seed the Database**
+    Populate the DB with realistic users and policies:
+    ```bash
+    python -m corpcard_sentinel.seed
+    ```
+
+5.  **Run the Backend**
     ```bash
     uvicorn corpcard_sentinel.main:app --reload
     ```
-    The API will be available at `http://localhost:8000`.
+    API: `http://localhost:8000`
 
-5.  **Run the Frontend Dashboard**
-    Open a new terminal and run:
+6.  **Run the Frontend Dashboard**
     ```bash
     streamlit run corpcard_sentinel/dashboard.py
     ```
-    The dashboard will open in your browser.
 
-## Usage
+## Deployment
 
-1.  **Seed Data**: Run `python -m corpcard_sentinel.seed` to populate the database with initial users and policies.
-2.  **Simulate**: Go to the "Live Simulation" tab to test transactions.
-3.  **Manage**: Use "Policy Control" to add new rules like "No Gambling".
+### Render (Backend)
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `uvicorn corpcard_sentinel.main:app --host 0.0.0.0 --port 10000`
+- **Env Vars**: `GOOGLE_API_KEY`, `DATABASE_URL`, `LLM_MODEL`
+
+### Streamlit Cloud (Frontend)
+- **Main File**: `corpcard_sentinel/dashboard.py`
+- **Env Vars**: `API_URL` (URL of your Render backend), `GOOGLE_API_KEY` (if needed locally)
