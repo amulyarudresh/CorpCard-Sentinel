@@ -3,6 +3,7 @@ import json
 from typing import TypedDict, List, Dict, Any, Optional, Literal
 from langgraph.graph import StateGraph, END
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from dotenv import load_dotenv
@@ -144,7 +145,7 @@ def evaluate(state: AgentState) -> AgentState:
             "decision": decision
         }
     except Exception as e:
-        print(f"Error in LLM evaluation: {e}")
+        print(f"CRITICAL ERROR in LLM evaluation: {e}")
         return {
             **state,
             "is_violation": True,
@@ -192,8 +193,11 @@ def enforce(state: AgentState) -> AgentState:
                     db.add(trans)
             
             db.commit()
+        except SQLAlchemyError as e:
+            print(f"CRITICAL DATABASE ERROR enforcing policy: {e}")
+            db.rollback()
         except Exception as e:
-            print(f"Error enforcing policy: {e}")
+            print(f"Unexpected error enforcing policy: {e}")
             db.rollback()
         finally:
             db.close()

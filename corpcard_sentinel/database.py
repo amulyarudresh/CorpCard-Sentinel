@@ -20,4 +20,11 @@ Base = declarative_base()
 def init_db():
     # Import models here to ensure they are registered with Base
     from . import models
-    Base.metadata.create_all(bind=engine)
+    try:
+        # Check connection
+        with engine.connect() as connection:
+            print("Database connection successful.")
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"CRITICAL: Failed to initialize database: {e}")
+        raise

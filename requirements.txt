@@ -12,3 +12,5 @@ streamlit
 requests
 langchain-google-genai
 pandas
+pytest
+pytest-mock

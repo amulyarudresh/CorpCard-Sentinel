@@ -32,6 +32,25 @@ The system uses **LangGraph** to orchestrate a sophisticated decision-making pro
 - **Frontend**: Streamlit
 - **AI**: LangChain, LangGraph, Google Gemini API (`gemini-2.5-flash`)
 - **Database**: MySQL (Production) / SQLite (Dev)
+- **Testing**: PyTest
+
+## Testing
+
+The project uses `pytest` for unit testing and `pytest-mock` for mocking external dependencies (like the LLM and Database).
+
+### Running Tests
+To run the automated test suite:
+```bash
+pytest tests/
+```
+
+This will execute all unit tests in the `tests/` directory, covering:
+- Database Models (`tests/test_models.py`)
+- Sentinel Agent Logic (`tests/test_sentinel_agent.py`)
+
+### Test Configuration
+- **`pytest.ini`**: Configures the python path to include the project root.
+- **`tests/conftest.py`**: Contains fixtures for in-memory databases and mocked API keys.
 
 ## Setup Instructions
 
