@@ -15,7 +15,32 @@ The system uses **LangGraph** to orchestrate a sophisticated decision-making pro
 4.  **Re-Evaluate**: The LLM re-assesses the transaction with this new context.
 5.  **Enforce**: Freezes the card if a violation is confirmed.
 
-![agent_flow](agent_flow.png)
+```mermaid
+graph TD
+    User((User)) -->|POST /simulate| API[FastAPI Gateway]
+    API --> Monitor
+    
+    subgraph "Agent (LangGraph)"
+        Monitor[Monitor] --> Evaluate{Evaluate Risk}
+        
+        Evaluate -->|SAFE| Approved(Approved)
+        Evaluate -->|SUSPICIOUS| Investigate[Investigate]
+        Evaluate -->|VIOLATION | Enforce[Enforce Policy]
+        Evaluate -->|MANUAL_REVIEW| Enforce
+        
+        Investigate -->|Fetch History| DB[(Database)]
+        DB --> Evaluate
+        
+        Enforce -->|Reason: Violation| Blocked(Blocked)
+        Enforce -->|Reason: Manual Review| ApprovedFlagged(Approved & Flagged)
+    end
+    
+    Approved -->|200 OK| API
+    ApprovedFlagged -->|200 OK| API
+    Blocked -->|403 Forbidden| API
+    
+    Enforce -->|Update DB| DB
+```
 
 ## Features
 
@@ -24,14 +49,14 @@ The system uses **LangGraph** to orchestrate a sophisticated decision-making pro
 - **Dynamic Policy Engine**: Create, Update, and Delete policies in natural language (e.g., "No alcohol on weekdays").
 - **Card Management**: Automatically freezes cards upon fraud detection.
 - **Audit Logs**: View detailed logs including the LLM's reasoning and investigation steps.
-- **Fail-Closed Security**: Automatically blocks transactions if the security check fails.
+- **Fail-Open Security**: Automatically allows transactions if the security check fails (prioritizes availability).
 
 ## Tech Stack
 
 - **Backend**: FastAPI, SQLAlchemy, PyMySQL
 - **Frontend**: Streamlit
 - **AI**: LangChain, LangGraph, Google Gemini API (`gemini-2.5-flash`)
-- **Database**: MySQL (Production) / SQLite (Dev)
+- **Database**: MySQL
 - **Testing**: PyTest
 
 ## Testing

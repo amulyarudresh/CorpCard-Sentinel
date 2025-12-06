@@ -28,7 +28,7 @@ class AgentState(TypedDict):
     is_violation: bool
     investigation_count: int
     spending_history: Optional[str]
-    decision: Optional[Literal["SAFE", "VIOLATION", "SUSPICIOUS"]]
+    decision: Optional[Literal["SAFE", "VIOLATION", "SUSPICIOUS", "MANUAL_REVIEW"]]
 
 def fetch_policies(db: Session) -> List[str]:
     policies = db.query(models.Policy).filter(models.Policy.is_active == True).all()
@@ -146,11 +146,12 @@ def evaluate(state: AgentState) -> AgentState:
         }
     except Exception as e:
         print(f"CRITICAL ERROR in LLM evaluation: {e}")
+        # Fail-Open but Flag: Allow transaction but mark for manual review
         return {
             **state,
-            "is_violation": True,
-            "violation_reason": f"System Error: Security Check Failed ({str(e)})",
-            "decision": "VIOLATION"
+            "is_violation": False,
+            "violation_reason": f"MANUAL REVIEW REQUIRED: System Error ({str(e)})",
+            "decision": "MANUAL_REVIEW"
         }
 
 def investigate(state: AgentState) -> AgentState:
@@ -170,26 +171,34 @@ def investigate(state: AgentState) -> AgentState:
     }
 
 def enforce(state: AgentState) -> AgentState:
-    if state['is_violation']:
-        user_id = state['transaction']['user_id']
-        reason = state['violation_reason']
+    user_id = state['transaction']['user_id']
+    reason = state['violation_reason']
+    decision = state.get('decision')
+    
+    if decision == "VIOLATION":
         print(f"Enforcing penalty on user {user_id}: Freezing card. Reason: {reason}")
-        
+    elif decision == "MANUAL_REVIEW":
+        print(f"Flagging transaction for user {user_id} for MANUAL REVIEW. Reason: {reason}")
+    
+    # DB Operations for Violation OR Manual Review
+    if decision in ["VIOLATION", "MANUAL_REVIEW"]:
         db = database.SessionLocal()
         try:
-            # Freeze User
-            user = db.query(models.User).filter(models.User.id == user_id).first()
-            if user:
-                user.card_status = models.CardStatus.FROZEN
-                db.add(user)
+            # Only Freeze if it is a rigid VIOLATION
+            if decision == "VIOLATION":
+                user = db.query(models.User).filter(models.User.id == user_id).first()
+                if user:
+                    user.card_status = models.CardStatus.FROZEN
+                    db.add(user)
             
-            # Update Transaction with Reason
+            # Update Transaction with Reason (for both Violation and Manual Review)
             trans_id = state['transaction'].get('id')
             if trans_id:
                 trans = db.query(models.Transaction).filter(models.Transaction.id == trans_id).first()
                 if trans:
                     trans.violation_reason = reason
-                    trans.is_violation = True
+                    # Manual review is NOT a violation yet, just a flag
+                    trans.is_violation = (decision == "VIOLATION") 
                     db.add(trans)
             
             db.commit()
@@ -207,7 +216,7 @@ def enforce(state: AgentState) -> AgentState:
 def decide_next_step(state: AgentState):
     decision = state.get("decision")
     
-    if decision == "VIOLATION":
+    if decision == "VIOLATION" or decision == "MANUAL_REVIEW":
         return "enforce"
     elif decision == "SUSPICIOUS":
         return "investigate"
